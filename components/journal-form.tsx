@@ -5,62 +5,77 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { PenLine } from "lucide-react"
+import type { JournalTemplate } from "@/types/templates"
 
 interface JournalFormProps {
   onAddEntry: (content: string) => void
+  template: JournalTemplate
 }
 
-export default function JournalForm({ onAddEntry }: JournalFormProps) {
+export default function JournalForm({ onAddEntry, template }: JournalFormProps) {
   const [content, setContent] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    // Just learned that preventDefault is used to prevent the refresh.
-    // #LearningOfTheDay #React #JavaScript
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!content.trim()) return
 
     setIsSubmitting(true)
 
-    // Yes, you're seeing this delay. Feels smoother to have it.
-    setTimeout(() => {
+    try {
       onAddEntry(content)
       setContent("")
+    } catch (error) {
+      console.error("Error submitting entry:", error)
+    } finally {
       setIsSubmitting(false)
-    }, 300)
+    }
   }
 
   return (
-    <Card className="shadow-md border-0">
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <PenLine className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-            <h2 className="text-lg font-medium">What's on your mind?</h2>
-          </div>
+    <Card className="shadow-sm border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <PenLine className="h-5 w-5 text-primary" />
+          {template.name}
+        </CardTitle>
+        {template.description && <p className="text-sm text-muted-foreground">{template.description}</p>}
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="pb-4">
+          <div className="space-y-4">
+            {template.prompts && (
+              <div className="space-y-2 mb-4">
+                {template.prompts.map((prompt: string, index: number) => (
+                  <div key={index} className="text-sm p-3 bg-muted/50 rounded-md border border-border/30">
+                    {prompt}
+                  </div>
+                ))}
+              </div>
+            )}
 
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Type your journal entry here..."
-            className="min-h-[150px] resize-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:focus:ring-gray-600"
-            required
-          />
-
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={!content.trim() || isSubmitting}
-              className="bg-gray-800 hover:bg-gray-700 text-white dark:bg-gray-700 dark:hover:bg-gray-600 transition-all"
-            >
-              {isSubmitting ? "Saving..." : "Save Entry"}
-            </Button>
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={template.placeholder || "Start writing..."}
+              className="min-h-[200px] resize-none text-base leading-relaxed"
+              required
+            />
           </div>
-        </form>
-      </CardContent>
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={!content.trim() || isSubmitting}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {isSubmitting ? "Saving..." : "Save Entry"}
+          </Button>
+        </CardFooter>
+      </form>
     </Card>
   )
 }

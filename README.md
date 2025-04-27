@@ -1,4 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# journal App
+
+A Next.js application for personal journaling with AI-powered insights.
+
+## Features
+
+-   **Smart Journaling:** Write entries using different templates (e.g., free-form, daily reflection, gratitude) or create your own.
+-   **AI Insights:** Automatically generates summaries, mood analysis (with scores and emojis), and suggestions based on your entries.
+-   **Mood Tracking:** Visualizes mood trends over time.
+-   **Entry Management:** View, list, and delete journal entries.
+-   **Authentication:** Uses Clerk for user sign-in/sign-up.
+-   **Theming:** Supports light and dark modes.
+
+## Tech Stack
+
+-   Next.js
+-   React
+-   TypeScript
+-   Tailwind CSS
+-   Shadcn UI
+-   Clerk (Authentication)
+-   Prisma
+-   Vercel AI Integration
 
 ## Getting Started
 

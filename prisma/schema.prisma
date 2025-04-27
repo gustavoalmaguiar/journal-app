@@ -30,4 +30,9 @@ model Journal {
   updatedAt DateTime @updatedAt
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+  template  String?
+  ai_summary String?
+  ai_mood String?
+  ai_mood_score Int?
+  ai_suggestion String?
 }
