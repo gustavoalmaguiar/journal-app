@@ -91,7 +91,7 @@ export default function InsightsPage() {
       {entries.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center">
-            <p className="text-muted-foreground mb-4">You haven't created any journal entries yet.</p>
+            <p className="text-muted-foreground mb-4">You haven’t created any journal entries yet.</p>
             <p className="text-sm">Start journaling to see insights and patterns in your writing.</p>
           </CardContent>
         </Card>
@@ -146,7 +146,7 @@ export default function InsightsPage() {
                 <div className="text-center">
                   <p className="text-3xl font-bold">{entries.length}</p>
                   <p className="text-muted-foreground">Total Entries</p>
-                  <p className="mt-4 text-sm">You've been journaling for {Math.ceil(entries.length / 2)} days</p>
+                  <p className="mt-4 text-sm">You’ve been journaling for {Math.ceil(entries.length / 2)} {entries.length / 2 === 1 ? "day" : "days"}</p>
                 </div>
               </div>
             </CardContent>

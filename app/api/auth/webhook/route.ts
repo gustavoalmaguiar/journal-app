@@ -8,9 +8,8 @@ export async function POST(request: Request) {
   if (payload.type === 'user.created') {
     const { id: clerkId, email_addresses, primary_email_address_id } = payload.data
 
-    // Find the primary email
     const primaryEmail = email_addresses.find(
-      (email: any) => email.id === primary_email_address_id
+      (email) => email.id === primary_email_address_id
     )
 
     if (!primaryEmail) {

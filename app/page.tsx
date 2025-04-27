@@ -1,42 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useAuth } from "@clerk/nextjs"
 import { getJournals, createJournal } from "@/lib/actions"
 import type { Entry } from "@/types/entry"
-import JournalForm from "@/components/journal-form"
 import EntriesList from "@/components/entries-list"
 import WelcomeScreen from "@/components/welcome-screen"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { journalTemplates } from "@/types/templates"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { Separator } from "@/components/ui/separator"
+import JournalTabs from "@/components/journal-tabs"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Home() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeTemplate, setActiveTemplate] = useState("free-form")
   const { isSignedIn } = useAuth()
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const pathname = usePathname()
-
-  useEffect(() => {
-    // Extract template from URL parameters
-    const templateParam = searchParams.get("template")
-    if (templateParam && journalTemplates[templateParam]) {
-      setActiveTemplate(templateParam)
-    }
-  }, [searchParams])
-
-  const handleTemplateChange = (value: string) => {
-    setActiveTemplate(value)
-
-    // Update URL without full page reload
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("template", value)
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
-  }
 
   useEffect(() => {
     async function loadEntries() {
@@ -102,25 +80,13 @@ export default function Home() {
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Let's journal</h1>
+        <h1 className="text-3xl font-bold mb-2">Let’s journal</h1>
         <p className="text-muted-foreground">Capture your thoughts, track your mood, and gain insights</p>
       </div>
 
-      <Tabs defaultValue="free-form" value={activeTemplate} onValueChange={handleTemplateChange} className="mb-8">
-        <TabsList className="mb-4">
-          {Object.entries(journalTemplates).map(([id, template]) => (
-            <TabsTrigger key={id} value={id}>
-              {template.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {Object.entries(journalTemplates).map(([id, template]) => (
-          <TabsContent key={id} value={id}>
-            <JournalForm onAddEntry={addEntry} template={template} />
-          </TabsContent>
-        ))}
-      </Tabs>
+      <Suspense fallback={<Skeleton className="h-10 w-full" />}>
+        <JournalTabs activeTemplate={activeTemplate} setActiveTemplate={setActiveTemplate} addEntry={addEntry} />
+      </Suspense>
 
       <div className="mt-12">
         <div className="flex items-center justify-between mb-6">

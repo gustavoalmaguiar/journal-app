@@ -16,6 +16,23 @@ export async function getJournals() {
   return user?.journals || []
 }
 
+export async function getJournalById(id: string) {
+  const { userId } = await auth()
+  if (!userId) throw new Error("Unauthorized")
+
+  const journal = await prisma.journal.findUnique({
+    where: { id },
+    include: { user: true },
+  })
+
+  // Ensure the journal exists and belongs to the authenticated user
+  if (!journal || journal.user.clerkId !== userId) {
+    return null // Or throw an error, depending on desired behavior for not found/unauthorized
+  }
+
+  return journal
+}
+
 export async function createJournal(data: {
   title: string
   content?: string
@@ -79,7 +96,7 @@ export async function updateJournal(
   if (!journal || journal.user.clerkId !== userId) throw new Error("Unauthorized")
 
   // Re-generate AI insights if content is updated
-  let updateData = { ...data }
+  const updateData = { ...data }
 
   if (data.content) {
     updateData.ai_summary = await generateJournalSummary(data.content)

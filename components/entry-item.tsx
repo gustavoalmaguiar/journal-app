@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 interface EntryItemProps {
   entry: Entry
@@ -31,7 +32,6 @@ export default function EntryItem({ entry }: EntryItemProps) {
   const [showInsights, setShowInsights] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-
   const formattedDate = formatDistanceToNow(new Date(entry.date), {
     addSuffix: true,
   })
@@ -76,6 +76,7 @@ export default function EntryItem({ entry }: EntryItemProps) {
         position: "bottom-center"
       })
       console.error(error)
+    } finally {
       setShowDeleteDialog(false)
       setIsDeleting(false)
     }
@@ -158,6 +159,11 @@ export default function EntryItem({ entry }: EntryItemProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Link href={`/journal/${entry.id}`}>
+                  View Details
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>Edit</DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleDeleteClick}
