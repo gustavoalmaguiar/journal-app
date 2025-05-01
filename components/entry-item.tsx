@@ -5,13 +5,13 @@ import type { Entry } from "@/types/entry"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Sparkles, MoreHorizontal, BookOpen, Lightbulb, Calendar, Trash2, Loader2 } from 'lucide-react'
+import { Sparkles, MoreHorizontal, BookOpen, Lightbulb, Calendar, Trash2, Loader2, Zap } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { journalTemplates } from "@/types/templates"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useState } from "react"
 import { Progress } from "@/components/ui/progress"
-import { deleteJournal } from "@/lib/actions"
+import { deleteJournal, processJournalWithAI, getUserCredits } from "@/lib/actions"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -31,7 +31,9 @@ interface EntryItemProps {
 export default function EntryItem({ entry }: EntryItemProps) {
   const [showInsights, setShowInsights] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [userCredits, setUserCredits] = useState<number | null>(null)
   const formattedDate = formatDistanceToNow(new Date(entry.date), {
     addSuffix: true,
   })
@@ -68,17 +70,63 @@ export default function EntryItem({ entry }: EntryItemProps) {
       await deleteJournal(entry.id)
       toast.success("Entry deleted successfully", {
         description: "Your journal entry has been permanently removed",
-        position: "bottom-center"
+        position: "bottom-center",
       })
     } catch (error) {
       toast.error("Failed to delete entry", {
         description: "There was a problem deleting your entry. Please try again.",
-        position: "bottom-center"
+        position: "bottom-center",
       })
       console.error(error)
     } finally {
       setShowDeleteDialog(false)
       setIsDeleting(false)
+    }
+  }
+
+  const handleProcessWithAI = async () => {
+    try {
+      // Check user credits first
+      const credits = await getUserCredits()
+      setUserCredits(credits)
+
+      if (credits <= 0) {
+        toast.error("Insufficient credits", {
+          description: "Please purchase credits to use AI features",
+          action: {
+            label: "Buy Credits",
+            onClick: () => (window.location.href = "/pricing"),
+          },
+        })
+        return
+      }
+
+      setIsProcessing(true)
+      await processJournalWithAI(entry.id)
+
+      // Refresh the page to show updated entry with AI insights
+      window.location.reload()
+
+      toast.success("AI analysis complete", {
+        description: "Your journal entry has been analyzed by AI",
+      })
+    } catch (error: any) {
+      if (error.message === "Insufficient credits") {
+        toast.error("Insufficient credits", {
+          description: "Please purchase credits to use AI features",
+          action: {
+            label: "Buy Credits",
+            onClick: () => (window.location.href = "/pricing"),
+          },
+        })
+      } else {
+        toast.error("Failed to process with AI", {
+          description: "There was a problem analyzing your entry. Please try again.",
+        })
+      }
+      console.error(error)
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -94,26 +142,17 @@ export default function EntryItem({ entry }: EntryItemProps) {
           </DialogHeader>
           <div className="p-4 my-2 border rounded-md bg-muted/50">
             <p className="text-sm font-medium text-muted-foreground">Entry from {exactDate}</p>
-            <p className="mt-1 text-sm line-clamp-2">
-              {entry.content.split('\n')[0]}
-            </p>
+            <p className="mt-1 text-sm line-clamp-2">{entry.content.split("\n")[0]}</p>
           </div>
           <DialogFooter className="flex sm:justify-between gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-              disabled={isDeleting}
-            >
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={isDeleting}
-              className={cn(
-                "transition-all",
-                isDeleting && "bg-destructive/80"
-              )}
+              className={cn("transition-all", isDeleting && "bg-destructive/80")}
             >
               {isDeleting ? (
                 <>
@@ -160,15 +199,10 @@ export default function EntryItem({ entry }: EntryItemProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem>
-                <Link href={`/journal/${entry.id}`}>
-                  View Details
-                </Link>
+                <Link href={`/journal/${entry.id}`}>View Details</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDeleteClick}
-                className="text-destructive focus:text-destructive"
-              >
+              <DropdownMenuItem onClick={handleDeleteClick} className="text-destructive focus:text-destructive">
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -198,42 +232,64 @@ export default function EntryItem({ entry }: EntryItemProps) {
           )}
         </CardContent>
 
-        {(entry.ai_summary || entry.ai_suggestion) && (
-          <CardFooter className="flex flex-col items-start pt-0 px-5 pb-4">
-            <Collapsible open={showInsights} onOpenChange={setShowInsights} className="w-full">
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1.5 text-xs p-0 h-auto text-primary hover:text-primary/80"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {showInsights ? "Hide AI insights" : "Show AI insights"}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 space-y-3 pt-3 border-t border-border/40">
-                {entry.ai_summary && (
-                  <div className="flex gap-3 text-sm rounded-md">
-                    <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-xs mb-1 text-muted-foreground">Summary</p>
-                      <p className="text-sm">{entry.ai_summary}</p>
+        <CardFooter className="flex flex-col items-start pt-0 px-5 pb-4">
+          {!entry.aiProcessed ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1.5"
+              onClick={handleProcessWithAI}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3.5 w-3.5 text-primary" />
+                  Analyze with AI (1 credit)
+                </>
+              )}
+            </Button>
+          ) : (
+            (entry.ai_summary || entry.ai_suggestion) && (
+              <Collapsible open={showInsights} onOpenChange={setShowInsights} className="w-full">
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1.5 text-xs p-0 h-auto text-primary hover:text-primary/80"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {showInsights ? "Hide AI insights" : "Show AI insights"}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 space-y-3 pt-3 border-t border-border/40">
+                  {entry.ai_summary && (
+                    <div className="flex gap-3 text-sm rounded-md">
+                      <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-xs mb-1 text-muted-foreground">Summary</p>
+                        <p className="text-sm">{entry.ai_summary}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {entry.ai_suggestion && (
-                  <div className="flex gap-3 text-sm rounded-md">
-                    <Lightbulb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-xs mb-1 text-muted-foreground">Suggestion</p>
-                      <p className="text-sm">{entry.ai_suggestion}</p>
+                  )}
+                  {entry.ai_suggestion && (
+                    <div className="flex gap-3 text-sm rounded-md">
+                      <Lightbulb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-xs mb-1 text-muted-foreground">Suggestion</p>
+                        <p className="text-sm">{entry.ai_suggestion}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </CardFooter>
-        )}
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            )
+          )}
+        </CardFooter>
       </Card>
     </>
   )

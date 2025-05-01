@@ -7,4 +7,5 @@ export interface Entry {
   ai_mood?: string
   ai_mood_score?: number
   ai_suggestion?: string
+  aiProcessed?: boolean
 }

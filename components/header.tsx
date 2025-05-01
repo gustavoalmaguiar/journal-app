@@ -5,21 +5,40 @@ import { usePathname } from "next/navigation"
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton, useAuth } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
-import { BookOpenText, BarChart, Sparkles, Menu } from "lucide-react"
+import { BookOpenText, BarChart, Sparkles, Menu, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { getUserCredits } from "@/lib/actions"
+import { Badge } from "@/components/ui/badge"
 
 const navItems = [
   { name: "Journal", href: "/", icon: BookOpenText },
   { name: "Insights", href: "/insights", icon: BarChart },
   { name: "Templates", href: "/templates", icon: Sparkles },
+  { name: "Pricing", href: "/pricing", icon: CreditCard },
 ]
 
 export default function Header() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [credits, setCredits] = useState<number | null>(null)
   const { isSignedIn } = useAuth()
+
+  useEffect(() => {
+    async function fetchCredits() {
+      if (isSignedIn) {
+        try {
+          const userCredits = await getUserCredits()
+          setCredits(userCredits)
+        } catch (error) {
+          console.error("Failed to fetch credits:", error)
+        }
+      }
+    }
+
+    fetchCredits()
+  }, [isSignedIn, pathname])
 
   if (!isSignedIn) {
     return null
@@ -63,6 +82,16 @@ export default function Header() {
                   )
                 })}
               </nav>
+              {credits !== null && (
+                <div className="px-7 mt-6">
+                  <Link href="/pricing" onClick={() => setMobileOpen(false)}>
+                    <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <span>{credits} credits</span>
+                    </Badge>
+                  </Link>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
 
@@ -91,6 +120,14 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+          {credits !== null && (
+            <Link href="/pricing" className="hidden md:flex">
+              <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span>{credits} credits</span>
+              </Badge>
+            </Link>
+          )}
           <ModeToggle />
           <SignedOut>
             <div className="hidden sm:flex items-center gap-2">

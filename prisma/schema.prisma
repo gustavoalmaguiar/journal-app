@@ -19,6 +19,8 @@ model User {
   clerkId   String   @unique
   email     String   @unique
   journals  Journal[]
+  credits       Int           @default(0)
+  transactions  Transaction[]
 }
 
 model Journal {
@@ -34,4 +36,17 @@ model Journal {
   ai_mood String?
   ai_mood_score Int?
   ai_suggestion String?
+  aiProcessed Boolean @default(false)
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Float
+  credits     Int
+  status      String   @default("pending") // pending, completed, failed
+  stripeId    String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
