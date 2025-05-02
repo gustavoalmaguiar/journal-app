@@ -28,7 +28,7 @@ const pricingPlans: PricingPlan[] = [
   {
     id: "starter",
     name: "Starter",
-    priceId: "price_1RJwso4WVR4vWMuZa3BUEkZ1",
+    priceId: process.env.NEXT_PUBLIC_PRICE_ID_STARTER!,
     price: "$5.99",
     credits: 10,
     description: "Perfect for casual journaling",
@@ -37,7 +37,7 @@ const pricingPlans: PricingPlan[] = [
   {
     id: "popular",
     name: "Popular",
-    priceId: "price_1RJyGA4WVR4vWMuZ1fszZtWH",
+    priceId: process.env.NEXT_PUBLIC_PRICE_ID_POPULAR!,
     price: "$9.99",
     credits: 25,
     description: "Best value for regular journaling",
@@ -53,7 +53,7 @@ const pricingPlans: PricingPlan[] = [
   {
     id: "premium",
     name: "Premium",
-    priceId: "price_1RJyHU4WVR4vWMuZHnPeNBYy",
+    priceId: process.env.NEXT_PUBLIC_PRICE_ID_PREMIUM!,
     price: "$19.99",
     credits: 60,
     description: "For dedicated journaling practice",

@@ -239,9 +239,9 @@ export async function createCheckoutSession(priceId: string) {
 // Helper function to get amount from price ID
 function getAmountFromPriceId(priceId: string): number {
   const prices = {
-    price_1RJwso4WVR4vWMuZa3BUEkZ1: 5.99,
-    price_1RJyGA4WVR4vWMuZ1fszZtWH: 9.99,
-    price_1RJyHU4WVR4vWMuZHnPeNBYy: 19.99,
+    [process.env.NEXT_PUBLIC_PRICE_ID_STARTER!]: 5.99,
+    [process.env.NEXT_PUBLIC_PRICE_ID_POPULAR!]: 9.99,
+    [process.env.NEXT_PUBLIC_PRICE_ID_PREMIUM!]: 19.99,
   }
   return prices[priceId as keyof typeof prices] || 0
 }
@@ -249,9 +249,9 @@ function getAmountFromPriceId(priceId: string): number {
 // Helper function to get credits from price ID
 function getCreditsFromPriceId(priceId: string): number {
   const credits = {
-    price_1RJwso4WVR4vWMuZa3BUEkZ1: 10,
-    price_1RJyGA4WVR4vWMuZ1fszZtWH: 25,
-    price_1RJyHU4WVR4vWMuZHnPeNBYy: 60,
+    [process.env.NEXT_PUBLIC_PRICE_ID_STARTER!]: 10,
+    [process.env.NEXT_PUBLIC_PRICE_ID_POPULAR!]: 25,
+    [process.env.NEXT_PUBLIC_PRICE_ID_PREMIUM!]: 60,
   }
   return credits[priceId as keyof typeof credits] || 0
 }
